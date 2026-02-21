@@ -13,6 +13,7 @@
             --text-muted: #64748b;
             --res-fijo: #059669;
             --res-mensual: #1d4ed8;
+            --neto-color: #0891b2;
         }
 
         body {
@@ -26,7 +27,6 @@
             align-items: center;
         }
 
-        /* TÍTULO PRINCIPAL */
         .main-title {
             font-size: 2rem;
             font-weight: 900;
@@ -92,7 +92,7 @@
 
         .result-area {
             margin-top: 10px;
-            padding: 25px 15px;
+            padding: 20px 15px;
             border-radius: 20px;
             text-align: center;
             display: none;
@@ -103,27 +103,43 @@
         .res-2 { background: #eff6ff; border: 2px solid #3b82f6; }
 
         .res-label {
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 700;
-            margin-bottom: 5px;
             color: var(--text-muted);
+            margin-bottom: 4px;
         }
 
         .res-value {
-            font-size: 3.5rem; 
+            font-size: 2.8rem; 
             font-weight: 900;
             line-height: 1;
-            letter-spacing: -2px;
-            margin: 10px 0;
+            letter-spacing: -1px;
+            margin: 5px 0;
+        }
+
+        .neto-value {
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--neto-color);
+            margin-bottom: 10px;
         }
 
         .res-1 .res-value { color: var(--res-fijo); }
         .res-2 .res-value { color: var(--res-mensual); }
 
         .res-detail {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            opacity: 0.8;
+            color: var(--text-muted);
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #cbd5e1;
+            line-height: 1.5;
+        }
+
+        .tax-info {
+            color: #b91c1c;
+            font-weight: 700;
         }
     </style>
 </head>
@@ -133,79 +149,101 @@
 
     <div class="card">
         <div class="section-title">Desde 27/01/2026</div>
-        
         <div class="input-row">
             <div>
-                <label>CAPITAL (€)</label>
-                <input type="number" id="cap1" placeholder="5000" oninput="calcFija()" inputmode="decimal">
+                <label>CAP. TOTAL (€)</label>
+                <input type="number" id="cap1" placeholder="5121.50" oninput="calcFija()" inputmode="decimal">
             </div>
             <div>
-                <label>INTERÉS (€)</label>
-                <input type="number" id="int1" placeholder="150" oninput="calcFija()" inputmode="decimal">
+                <label>INT. NETO (€)</label>
+                <input type="number" id="int1" placeholder="121.50" oninput="calcFija()" inputmode="decimal">
             </div>
         </div>
 
         <div id="resBox1" class="result-area res-1">
-            <div class="res-label">TAE ACTUAL</div>
+            <div class="res-label">TAE ANUAL BRUTO</div>
             <div id="tasaAnual1" class="res-value">0%</div>
-            <div id="diasInfo" class="res-detail"></div>
+            <div class="res-label">INTERÉS ANUAL NETO</div>
+            <div id="tasaNeto1" class="neto-value">0%</div>
+            <div id="info1" class="res-detail"></div>
         </div>
     </div>
 
     <div class="card">
         <div class="section-title">Proyección Mensual</div>
-        
         <div class="input-row">
             <div>
-                <label>CAPITAL (€)</label>
-                <input type="number" id="cap2" placeholder="1000" oninput="calcMensual()" inputmode="decimal">
+                <label>CAP. TOTAL (€)</label>
+                <input type="number" id="cap2" placeholder="1008.10" oninput="calcMensual()" inputmode="decimal">
             </div>
             <div>
-                <label>INT. MES (€)</label>
-                <input type="number" id="int2" placeholder="10" oninput="calcMensual()" inputmode="decimal">
+                <label>INT. NETO MES (€)</label>
+                <input type="number" id="int2" placeholder="8.10" oninput="calcMensual()" inputmode="decimal">
             </div>
         </div>
 
         <div id="resBox2" class="result-area res-2">
-            <div class="res-label">INTERÉS ANUAL</div>
+            <div class="res-label">INT. ANUAL BRUTO</div>
             <div id="tasaAnual2" class="res-value">0%</div>
-            <div class="res-detail">Si se mantiene cada mes</div>
+            <div class="res-label">INTERÉS ANUAL NETO</div>
+            <div id="tasaNeto2" class="neto-value">0%</div>
+            <div id="info2" class="res-detail"></div>
         </div>
     </div>
 
 <script>
     const FECHA_INICIO = new Date('2026-01-27');
     const hoy = new Date();
+    const IRPF = 0.19;
 
     function calcFija() {
-        const cap = parseFloat(document.getElementById('cap1').value);
-        const inter = parseFloat(document.getElementById('int1').value);
+        const capTotal = parseFloat(document.getElementById('cap1').value);
+        const neto = parseFloat(document.getElementById('int1').value);
         const box = document.getElementById('resBox1');
 
-        if (cap > 0 && inter >= 0) {
-            const dias = Math.floor((hoy - FECHA_INICIO) / (1000 * 60 * 60 * 24));
+        if (capTotal > 0 && neto >= 0 && (capTotal - neto) > 0) {
+            const capBase = capTotal - neto;
+            const bruto = neto / (1 - IRPF);
+            const impuesto = bruto - neto;
+            const dias = Math.max(0, Math.floor((hoy - FECHA_INICIO) / (1000 * 60 * 60 * 24)));
+            
+            let tasaBruta = 0;
+            let tasaNeto = 0;
+            
             if (dias > 0) {
-                const tasaAnual = ((inter / cap) / dias) * 365 * 100;
-                box.style.display = 'block';
-                document.getElementById('tasaAnual1').innerText = tasaAnual.toFixed(1) + '%';
-                document.getElementById('diasInfo').innerText = `${dias} días transcurridos`;
-            } else {
-                box.style.display = 'block';
-                document.getElementById('tasaAnual1').innerText = "0%";
-                document.getElementById('diasInfo').innerText = "Día 1 de operación";
+                tasaBruta = ((bruto / capBase) / dias) * 365 * 100;
+                tasaNeto = ((neto / capBase) / dias) * 365 * 100;
             }
+
+            box.style.display = 'block';
+            document.getElementById('tasaAnual1').innerText = tasaBruta.toFixed(2) + '%';
+            document.getElementById('tasaNeto1').innerText = tasaNeto.toFixed(2) + '%';
+            document.getElementById('info1').innerHTML = 
+                `Base: <b>${capBase.toFixed(2)}€</b> | Bruto: <b>${bruto.toFixed(2)}€</b><br>` +
+                `IRPF (19%): <span class="tax-info">${impuesto.toFixed(2)}€</span><br>` +
+                `<small>${dias} días transcurridos</small>`;
         } else { box.style.display = 'none'; }
     }
 
     function calcMensual() {
-        const cap = parseFloat(document.getElementById('cap2').value);
-        const inter = parseFloat(document.getElementById('int2').value);
+        const capTotal = parseFloat(document.getElementById('cap2').value);
+        const netoMes = parseFloat(document.getElementById('int2').value);
         const box = document.getElementById('resBox2');
 
-        if (cap > 0 && inter >= 0) {
-            const tasaAnual = (inter / cap) * 12 * 100;
+        if (capTotal > 0 && netoMes >= 0 && (capTotal - netoMes) > 0) {
+            const capBase = capTotal - netoMes;
+            const brutoMes = netoMes / (1 - IRPF);
+            const impuestoMes = brutoMes - netoMes;
+            
+            const tasaBruta = (brutoMes / capBase) * 12 * 100;
+            const tasaNeto = (netoMes / capBase) * 12 * 100;
+
             box.style.display = 'block';
-            document.getElementById('tasaAnual2').innerText = tasaAnual.toFixed(1) + '%';
+            document.getElementById('tasaAnual2').innerText = tasaBruta.toFixed(2) + '%';
+            document.getElementById('tasaNeto2').innerText = tasaNeto.toFixed(2) + '%';
+            document.getElementById('info2').innerHTML = 
+                `Base: <b>${capBase.toFixed(2)}€</b> | Bruto/m: <b>${brutoMes.toFixed(2)}€</b><br>` +
+                `Impuesto/m: <span class="tax-info">${impuestoMes.toFixed(2)}€</span>`;
         } else { box.style.display = 'none'; }
     }
 </script>
