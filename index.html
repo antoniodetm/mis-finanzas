@@ -151,20 +151,18 @@
         <div class="section-title">Desde 27/01/2026</div>
         <div class="input-row">
             <div>
-                <label>CAP. TOTAL (€)</label>
-                <input type="number" id="cap1" placeholder="5121.50" oninput="calcFija()" inputmode="decimal">
+                <label>CAPITAL (€)</label>
+                <input type="number" id="cap1" value="20000" oninput="calcFija()" inputmode="decimal">
             </div>
             <div>
-                <label>INT. NETO (€)</label>
-                <input type="number" id="int1" placeholder="121.50" oninput="calcFija()" inputmode="decimal">
+                <label>INTERÉS (€)</label>
+                <input type="number" id="int1" placeholder="Ej: 150" oninput="calcFija()" inputmode="decimal">
             </div>
         </div>
 
         <div id="resBox1" class="result-area res-1">
-            <div class="res-label">TAE ANUAL BRUTO</div>
+            <div class="res-label">TAE ANUAL</div>
             <div id="tasaAnual1" class="res-value">0%</div>
-            <div class="res-label">INTERÉS ANUAL NETO</div>
-            <div id="tasaNeto1" class="neto-value">0%</div>
             <div id="info1" class="res-detail"></div>
         </div>
     </div>
@@ -174,11 +172,11 @@
         <div class="input-row">
             <div>
                 <label>CAP. TOTAL (€)</label>
-                <input type="number" id="cap2" placeholder="1008.10" oninput="calcMensual()" inputmode="decimal">
+                <input type="number" id="cap2" placeholder="Ej: 1008.10" oninput="calcMensual()" inputmode="decimal">
             </div>
             <div>
                 <label>INT. NETO MES (€)</label>
-                <input type="number" id="int2" placeholder="8.10" oninput="calcMensual()" inputmode="decimal">
+                <input type="number" id="int2" placeholder="Ej: 8.10" oninput="calcMensual()" inputmode="decimal">
             </div>
         </div>
 
@@ -197,30 +195,22 @@
     const IRPF = 0.19;
 
     function calcFija() {
-        const capTotal = parseFloat(document.getElementById('cap1').value);
-        const neto = parseFloat(document.getElementById('int1').value);
+        const cap = parseFloat(document.getElementById('cap1').value);
+        const inter = parseFloat(document.getElementById('int1').value);
         const box = document.getElementById('resBox1');
 
-        if (capTotal > 0 && neto >= 0 && (capTotal - neto) > 0) {
-            const capBase = capTotal - neto;
-            const bruto = neto / (1 - IRPF);
-            const impuesto = bruto - neto;
+        if (cap > 0 && inter >= 0) {
             const dias = Math.max(0, Math.floor((hoy - FECHA_INICIO) / (1000 * 60 * 60 * 24)));
-            
-            let tasaBruta = 0;
-            let tasaNeto = 0;
-            
+            let tasaAnual = 0;
             if (dias > 0) {
-                tasaBruta = ((bruto / capBase) / dias) * 365 * 100;
-                tasaNeto = ((neto / capBase) / dias) * 365 * 100;
+                // Cálculo directo sin deducciones ni base inversa
+                tasaAnual = ((inter / cap) / dias) * 365 * 100;
             }
 
             box.style.display = 'block';
-            document.getElementById('tasaAnual1').innerText = tasaBruta.toFixed(2) + '%';
-            document.getElementById('tasaNeto1').innerText = tasaNeto.toFixed(2) + '%';
+            document.getElementById('tasaAnual1').innerText = tasaAnual.toFixed(2) + '%';
             document.getElementById('info1').innerHTML = 
-                `Base: <b>${capBase.toFixed(2)}€</b> | Bruto: <b>${bruto.toFixed(2)}€</b><br>` +
-                `IRPF (19%): <span class="tax-info">${impuesto.toFixed(2)}€</span><br>` +
+                `Rentabilidad acumulada directa<br>` +
                 `<small>${dias} días transcurridos</small>`;
         } else { box.style.display = 'none'; }
     }
@@ -246,6 +236,11 @@
                 `Impuesto/m: <span class="tax-info">${impuestoMes.toFixed(2)}€</span>`;
         } else { box.style.display = 'none'; }
     }
+
+    window.onload = () => {
+        if(document.getElementById('int1').value) calcFija();
+        if(document.getElementById('int2').value) calcMensual();
+    };
 </script>
 
 </body>
